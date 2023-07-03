@@ -91,7 +91,6 @@ class Upload {
 
   static async removeTmp(path) {
     try {
-      console.log("path", path);
       await fs.unlink(path);
     } catch (error) {
       return false;

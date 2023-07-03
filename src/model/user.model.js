@@ -5,13 +5,8 @@ const userSchema = new Schema({
   username: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  name: String,
   role: { type: Number, default: 0 },
-  note: String,
-  date: String,
-  phone: String,
   active: { type: Boolean, default: true },
-  img: { type: Schema.Types.ObjectId, ref: "images" },
   created_time: { type: Number, default: Date.now },
   updated_time: { type: Number, default: Date.now },
 });

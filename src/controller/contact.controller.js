@@ -1,5 +1,5 @@
 const schema = require("../validate/contact.schema");
-const contactModel = require("../model/contact.model");
+const recruitmentModel = require("../model/recruitment.model");
 const Helper = require("../utils/helper");
 
 class ContactController {
@@ -7,7 +7,7 @@ class ContactController {
     try {
       const data = req.body;
       await schema.validateAsync(data);
-      let response = await contactModel.create(data);
+      let response = await recruitmentModel.create(data);
       return res.send({ success: true, data: response });
     } catch (error) {
       console.error(error);
@@ -24,12 +24,12 @@ class ContactController {
         const searchRegex = new RegExp(`.*${search}.*`, "i");
         condition["$or"] = [{ name: searchRegex }, { phone: searchRegex }, { email: searchRegex }];
       }
-      let response = await contactModel
+      let response = await recruitmentModel
         .find(condition)
         .sort(sort || { created_time: -1 })
         .skip(Number(skip))
         .limit(Number(limit));
-      let count = await contactModel.count();
+      let count = await recruitmentModel.count();
       return res.send({ success: true, list: response, total: count, totalPage: count % limit == 0 ? count / limit : Math.floor(count / limit) + 1 });
     } catch (error) {
       console.error(error);
@@ -43,7 +43,7 @@ class ContactController {
       if (!id) {
         return res.status(500).send({ success: false, message: "no id" });
       }
-      let response = await contactModel.findOne({ _id: id });
+      let response = await recruitmentModel.findOne({ _id: id });
       return res.send({ success: true, data: response });
     } catch (error) {
       console.error(error);
@@ -54,7 +54,7 @@ class ContactController {
   static async delete(req, res) {
     try {
       const id = req.params.id;
-      let response = await contactModel.findOneAndUpdate({ _id: id }, { deleted_time: Date.now() });
+      let response = await recruitmentModel.findOneAndUpdate({ _id: id }, { deleted_time: Date.now() });
       return res.send({ success: true, data: response });
     } catch (error) {
       console.error(error);
