@@ -10,7 +10,9 @@ const auth = (req, res, next) => {
       if (files && !Array.isArray(files)) {
         files = [files]
       }
-      files.map(file => Upload.removeTmp(file.tempFilePath))
+      if(files) {
+        files.map(file => Upload.removeTmp(file.tempFilePath))
+      }
       return res.status(401).send({ success: false, message: "Authentication failed" })
     }
 
