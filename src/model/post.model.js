@@ -11,7 +11,6 @@ const postSchema = new Schema({
   image: { type: Schema.Types.ObjectId, ref: "images" },
   url_image: {type: String},
   view: { type: Number, default: 0 },
-  // approved: { type: String, default: 0 },
   created_time: { type: Number, default: Date.now },
   updated_time: { type: Number, default: Date.now },
   deleted_time: { type: Number }

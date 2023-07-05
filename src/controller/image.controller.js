@@ -1,28 +1,20 @@
-const schema = require("../validate/contact.schema");
 const imageModel = require("../model/image.model");
-const imageTopic = require("../model/imageTopic.model");
-const Helper = require("../utils/helper");
-
+const uploadController = require("./upload.controller");
+const LIMIT = 200
 class ImageController {
   static async list(req, res) {
     try {
-      const { page, limit, sort, search, topicId } = req.body;
-      let skip = (page - 1) * limit;
-      let condition = {}
-      if(topicId) {
-        let imagesId = await imageTopic.find({ topic: topicId }).distinct("image");
-        condition._id = {
-          $nin: imagesId
-        }
-      }
-      let response = await imageModel
-        .find(condition)
-        .sort(sort || { created_time: -1 })
-        .skip(Number(skip))
-        .limit(Number(limit));
-
-      let count = await imageModel.count(condition);
-      return res.send({ success: true, list: response, total: count, totalPage: count % limit == 0 ? count / limit : Math.floor(count / limit) + 1 });
+      const { page, limit, sort } = req.body;
+      const skip = (page - 1) * (limit || LIMIT);
+      const [response, count] = await Promise.all([
+        await imageModel
+          .find()
+          .sort(sort || { created_time: -1 })
+          .skip(Number(skip))
+          .limit(Number(LIMIT)),
+        imageModel.count()
+      ]);
+      return res.send({ success: true, list: response, total: count, totalPage: Math.ceil(count / LIMIT) });
     } catch (error) {
       console.error(error);
       return res.status(500).send({ success: false, message: error.message });
@@ -32,7 +24,14 @@ class ImageController {
   static async delete(req, res) {
     try {
       const id = req.params.id;
-      let response = await imageModel.findOneAndUpdate({ _id: id }, { delete_time: Date.now() });
+      const image = await imageModel.findById(id);
+      if (!image) {
+        return res.status(404).send({ success: false, message: "Image not found" });
+      }
+      await Promise.all([
+        imageModel.deleteOne({ _id: id }),
+        uploadController.destroy(image.public_id)
+      ]);
       return res.send({ success: true, data: response });
     } catch (error) {
       console.error(error);

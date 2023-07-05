@@ -1,7 +1,5 @@
 const cloudinary = require("cloudinary").v2;
 const imageModel = require("../model/image.model");
-// const mediaModel = require("../model/medias");
-// const { google } = require("googleapis");
 const fs = require("fs").promises;
 const path = require("path");
 
@@ -16,20 +14,19 @@ cloudinary.config({
 class Upload {
   static async uploadFile(req, res) {
     try {
+      const descriptions = req.body.descriptions;
       let files = req?.files?.file;
-      console.log('files', files)
       if (!Array.isArray(files)) {
         files = [files];
       }
-      let rs = [];
+      const rs = [];
       await Promise.all(
         files.map(async (file) => {
-          let type = Upload.checkTypeFile(file);
+          const type = Upload.checkTypeFile(file);
           if (!type) {
-            Upload.removeTmp(file.tempFilePath);
-            return;
+            return Upload.removeTmp(file.tempFilePath);
           }
-          let data = await Upload.uploadToCloudinary(file, type);
+          const data = await Upload.uploadToCloudinary(file, type, descriptions);
           rs.push(data);
         })
       );
@@ -45,24 +42,28 @@ class Upload {
     }
   }
 
-  static async uploadToCloudinary(file, type) {
+  static async uploadToCloudinary(file, type, descriptions) {
     try {
-      let params = {
+      const params = {
         folder: "URI",
         resource_type: type,
       };
-      let result = await cloudinary.uploader.upload(file.tempFilePath, params);
-      await Upload.removeTmp(file.tempFilePath);
-      let data = {
+      const result = await cloudinary.uploader.upload(file.tempFilePath, params);
+      const data = {
         public_id: result.public_id,
-        src: result.secure_url,
+        url: result.secure_url,
+        descriptions: descriptions,
+        type: type,
       };
-      const img = await imageModel.create(data);
+      const [img] = await Promise.all([
+        imageModel.create(data),
+        Upload.removeTmp(file.tempFilePath)
+      ]);
       data.img = img;
       return data;
     } catch (error) {
       console.error(error);
-      return false;
+      return null;
     }
   }
 
@@ -78,7 +79,7 @@ class Upload {
 
   static async destroy(public_id) {
     try {
-      let result = await cloudinary.uploader.destroy(public_id, async (error) => {
+      const result = await cloudinary.uploader.destroy(public_id, async (error) => {
         if (error) throw error;
       });
       if (result.result != "ok") return false;
