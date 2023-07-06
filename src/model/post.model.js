@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 const postSchema = new Schema({
   title: { type: String, required: true },
   slug: { type: String, required: true, unique: true },
-  category: [{ type: Schema.Types.ObjectId, ref: "categories" }],
+  type: { type: String, values: ["news", "event"], required: true },
   descriptions: String,
   content: String,
   author: { type: Schema.Types.ObjectId, ref: "users" },
@@ -16,16 +16,6 @@ const postSchema = new Schema({
   deleted_time: { type: Number }
 });
 
-postSchema.pre("findOne", async function (done) {
-  const record = await this.model.find(this.getQuery());
-  // console.log('record', record)
-  if (record.length != 0) {
-    await this.model.findByIdAndUpdate(record[0]._id, {
-      view: record[0].view + 1,
-    });
-  }
-  done();
-});
 
 postSchema.index({ slug: 1 }, { unique: true })
 

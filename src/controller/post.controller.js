@@ -1,7 +1,6 @@
 const Helper = require("../utils/helper");
 const postModel = require("../model/post.model");
 const userModel = require("../model/user.model");
-const categoryModel = require("../model/category.model");
 const schema = require("../validate/post.schema");
 const Upload = require("./upload.controller");
 const ObjectId = require("mongodb").ObjectId;
@@ -17,7 +16,7 @@ class PostController {
       if (!find) return res.status(400).send({ success: false, message: "Not find user" });
       data.author = uid;
       const slug = Helper.removeAccents(data.title, true);
-      data.slug = slug;
+      data.slug = slug.split(" ").join("-") + "-" + Date.now();
       if (file) {
         const rs = await Upload.uploadToCloudinary(file, "image");
         data.image = rs.img._id;
@@ -34,22 +33,30 @@ class PostController {
 
   static async list(req, res) {
     try {
-      const { filter, search, sort, page, limit } = req.body;
+      const { type, search, sort, page, limit } = req.body;
       let condition = { deleted_time: { $exists: false } };
-      PostController.mapFilter(condition, search, filter);
-
-      let skip = (page - 1) * limit;
-
-      const result = await postModel
-        .find(condition)
-        .populate({ path: "category", select: "name" })
-        .populate({ path: "author", select: "name" })
-        .populate({ path: "image", select: "src" })
-        .sort(sort || { created_time: -1 })
-        .skip(Number(skip) || 0)
-        .limit(Number(limit) || 20);
-      const count = await postModel.countDocuments(condition);
-      return res.send({ success: true, list: result, total: count, totalPage: count % limit == 0 ? count / limit : Math.floor(count / limit) + 1 });
+      if (search) {
+        const searchRegex = new RegExp(`.*${search}.*`, "i");
+        condition["$or"] = [{ title: searchRegex }, { descriptions: searchRegex }];
+      }
+      if (type) {
+        condition.type = type;
+      }
+      if (limit && limit == 3) {
+        condition.created_time = { $gte: Date.now() - 30 * 24 * 60 * 60 * 1000 }
+      }
+      const skip = (page - 1) * limit;
+      const [result, count] = await Promise.all([
+        postModel
+          .find(condition)
+          .populate({ path: "author", select: "name" })
+          .populate({ path: "image", select: "url" })
+          .sort(sort || { created_time: -1 })
+          .skip(Number(skip) || 0)
+          .limit(Number(limit) || 20),
+        postModel.countDocuments(condition)
+      ]);
+      return res.send({ success: true, list: result, total: count, totalPage: Math.ceil(count / limit)});
     } catch (error) {
       console.error(error);
       return res.status(500).send({ success: false, message: error.message });
@@ -59,15 +66,34 @@ class PostController {
   static async get(req, res) {
     try {
       const slug = req.params.slug;
-      let condition = { $or: [ { slug: slug } ] }
-      if(ObjectId.isValid(slug)) {
-        condition.$or.push( { _id: slug })
+      let condition = { $or: [{ slug: slug }] }
+      if (ObjectId.isValid(slug)) {
+        condition.$or.push({ _id: slug })
       }
       const post = await postModel
-        .findOne({ ...condition , deleted_time: { $exists: false } })
-        .populate({ path: "category", select: "name slug" })
+        .findOne({ ...condition, deleted_time: { $exists: false } })
         .populate({ path: "author", select: "name username email" })
-        .populate({ path: "image", select: "src" });
+        .populate({ path: "image", select: "url" });
+      if (!post) return res.status(400).send({ success: false, message: "Not find post!" });
+      await postModel.updateOne({ _id: post._id }, { view: post.view + 1 });
+      return res.send({ success: true, data: post });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).send({ success: false, message: error.message });
+    }
+  }
+
+  static async getUpdate(req, res) {
+    try {
+      const slug = req.params.slug;
+      let condition = { $or: [{ slug: slug }] }
+      if (ObjectId.isValid(slug)) {
+        condition.$or.push({ _id: slug })
+      }
+      const post = await postModel
+        .findOne({ ...condition, deleted_time: { $exists: false } })
+        .populate({ path: "author", select: "name username email" })
+        .populate({ path: "image", select: "url" });
       if (!post) return res.status(400).send({ success: false, message: "Not find post!" });
       return res.send({ success: true, data: post });
     } catch (error) {
@@ -101,7 +127,7 @@ class PostController {
         data.url_image = rs.img.src;
       }
       const slug = Helper.removeAccents(data.title, true);
-      data.slug = slug;
+      data.slug = slug.split(" ").join("-") + "-" + Date.now();
       const post = await postModel.findByIdAndUpdate(id, data, { new: true });
       if (!post) return res.status(500).send({ success: false, message: "Not find post" });
       return res.send({ success: true, data: post });
@@ -109,32 +135,6 @@ class PostController {
       console.error(error);
       return res.status(500).send({ success: false, message: error.message });
     }
-  }
-
-  static async mapFilter(condition, search, filter) {
-    if (search) {
-      const searchRegex = new RegExp(`.*${search}.*`, "i");
-      condition["$or"] = [{ title: searchRegex }, { descriptions: searchRegex }];
-    }
-    if (!filter) return condition;
-    if (filter.category) {
-      condition.category = filter.category;
-    }
-    if(filter.slug_category) {
-      let category = await categoryModel.findOne({slug: slug_category})
-      condition.category = category._id
-    }
-
-    // if (filter.category) {
-    //   condition.category = filter.category;
-    // }
-    // if (filter.approved) {
-    //   condition.approved = filter.approved;
-    // }
-    // if (filter.author) {
-    //   condition.author = filter.author;
-    // }
-    return condition;
   }
 }
 

@@ -14,7 +14,7 @@ cloudinary.config({
 class Upload {
   static async uploadFile(req, res) {
     try {
-      const descriptions = req.body.descriptions;
+      const {topicId} = req.body;
       let files = req?.files?.file;
       if (!Array.isArray(files)) {
         files = [files];
@@ -26,11 +26,11 @@ class Upload {
           if (!type) {
             return Upload.removeTmp(file.tempFilePath);
           }
-          const data = await Upload.uploadToCloudinary(file, type, descriptions);
+          const data = await Upload.uploadToCloudinary(file, type, topicId);
           rs.push(data);
         })
       );
-      return res.send({ success: true, imageURL: rs[0]?.src, list: rs });
+      return res.send({ success: true, imageURL: rs[0]?.url, list: rs });
     } catch (error) {
       let files = req?.files?.file;
       if (!Array.isArray(files)) {
@@ -42,7 +42,7 @@ class Upload {
     }
   }
 
-  static async uploadToCloudinary(file, type, descriptions) {
+  static async uploadToCloudinary(file, type, topicId) {
     try {
       const params = {
         folder: "URI",
@@ -52,9 +52,11 @@ class Upload {
       const data = {
         public_id: result.public_id,
         url: result.secure_url,
-        descriptions: descriptions,
         type: type,
       };
+      if (topicId) {
+        data.topic_id = topicId;
+      }
       const [img] = await Promise.all([
         imageModel.create(data),
         Upload.removeTmp(file.tempFilePath)

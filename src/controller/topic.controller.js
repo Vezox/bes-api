@@ -8,7 +8,7 @@ class TopicController {
     try {
       const data = req.body;
       await schema.validateAsync(data);
-      data.slug = Helper.removeAccents(data.name, false);
+      data.slug = (Helper.removeAccents(data.name, false)).split(" ").join("-")
       let find = await topicModel.findOne({ slug: data.slug });
       if (find) {
         return res.status(500).send({ success: false, message: "topic exists" });
@@ -112,7 +112,7 @@ class TopicController {
         );
       }
       if (data.name) {
-        data.slug = Helper.removeAccents(data.name, false);
+        data.slug = (Helper.removeAccents(data.name, false)).split(" ").join("-")
         let response = await topicModel.findOneAndUpdate({ _id: id }, data, { new: true });
       }
 

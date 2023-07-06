@@ -31,7 +31,7 @@ class recruitmentController {
           .limit(Number(limit)),
         recruitmentModel.count()
       ]);
-      return res.send({ success: true, list, total: count, totalPage: (count / limit).toFixed() });
+      return res.send({ success: true, list, total: count, totalPage: Math.ceil(count / limit) });
     } catch (error) {
       console.error(error);
       return res.status(500).send({ success: false, message: error.message });

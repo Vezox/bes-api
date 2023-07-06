@@ -9,6 +9,7 @@ class UserController {
       const salt = bcrypt.genSaltSync(10);
       const hashPass = bcrypt.hashSync(data.password, salt);
       data.password = hashPass;
+      console.log(data)
       const newUser = await userModel.create(data);
       if (!newUser) return res.status(500).send({ success: false, message: "create failed" });
       const token = jwt.sign({ id: newUser._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "30d" });

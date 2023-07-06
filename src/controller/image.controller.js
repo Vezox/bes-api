@@ -4,11 +4,15 @@ const LIMIT = 200
 class ImageController {
   static async list(req, res) {
     try {
-      const { page, limit, sort } = req.body;
+      const { page, limit, sort, topicId } = req.body;
       const skip = (page - 1) * (limit || LIMIT);
+      let condition = {};
+      if (topicId) {
+        condition = { topic_id: topicId };
+      }
       const [response, count] = await Promise.all([
         await imageModel
-          .find()
+          .find(condition)
           .sort(sort || { created_time: -1 })
           .skip(Number(skip))
           .limit(Number(LIMIT)),
