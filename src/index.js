@@ -4,7 +4,15 @@ const router = require("./router");
 const cors = require("cors")
 const fileUpload = require("express-fileupload");
 const connectDB = require("./config/connect.db")
+const https = require('https');
+const fs = require('fs');
 const app = express();
+
+const options = {
+  key: fs.readFileSync('src/cert/server.key'),
+  cert: fs.readFileSync('src/cert/server.crt'),
+};
+const httpsServer = https.createServer(options, app);
 
 app.use(cors());
 app.use(express.json());
@@ -18,4 +26,4 @@ connectDB();
 
 
 const PORT = process.env.PORT;
-app.listen(PORT, console.log(`Server run on ${PORT}`));
+httpsServer.listen(PORT, console.log(`Server run on ${PORT}`));
