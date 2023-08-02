@@ -24,7 +24,7 @@ class ImageController {
         .skip(Number(skip) || 0)
         .limit(Number(limit) || 20);
       let count = await imageTopicModel.count(condition);
-      return res.send({ success: true, list: response, total: count, totalPage: count % limit == 0 ? count / limit : Math.floor(count / limit) + 1 });
+      return res.send({ success: true, list: response, total: count, totalPage: count % limit == 0 ? count / limit : Math.floor(count / limit) + 1, topic });
     } catch (error) {
       console.error(error);
       return res.status(500).send({ success: false, message: error.message });
