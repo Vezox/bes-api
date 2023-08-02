@@ -7,9 +7,9 @@ const cache = require("../utils/cache");
 class ImageController {
   static async list(req, res) {
     try {
-      const { page, limit, sort, search, slug_topic } = req.body;
+      const { page, limit, sort, search, slug_topic = "co-so-vat-chat" } = req.body;
       let skip = (page - 1) * limit;
-      let topic = await topicModel.findOne({ slug: slug_topic || "co-so-vat-chat" });
+      let topic = await topicModel.findOne({ slug: slug_topic});
       let condition = { deleted_time: { $exists: false } };
       if (slug_topic) {
         condition.topic = topic._id;
@@ -24,7 +24,7 @@ class ImageController {
         .skip(Number(skip) || 0)
         .limit(Number(limit) || 20);
       let count = await imageTopicModel.count(condition);
-      return res.send({ success: true, list: response, total: count, totalPage: count % limit == 0 ? count / limit : Math.floor(count / limit) + 1, topic });
+      return res.send({ success: true, list: response, total: count, totalPage: Math.ceil(count / limit), topic });
     } catch (error) {
       console.error(error);
       return res.status(500).send({ success: false, message: error.message });
