@@ -5,6 +5,8 @@ const schema = Joi.object({
     content: Joi.string(),
     descriptions: Joi.string(),
     type: Joi.string(),
+    address: Joi.string().allow(''),
+    date: Joi.number().allow(''),
 })
 
 module.exports = schema

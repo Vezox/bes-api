@@ -10,6 +10,8 @@ const postSchema = new Schema({
   author: { type: Schema.Types.ObjectId, ref: "users" },
   image: { type: Schema.Types.ObjectId, ref: "images" },
   url_image: {type: String},
+  date: { type: Number, default: Date.now },
+  address: String,
   view: { type: Number, default: 0 },
   created_time: { type: Number, default: Date.now },
   updated_time: { type: Number, default: Date.now },
