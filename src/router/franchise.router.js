@@ -5,7 +5,7 @@ const { auth } = require("../middleware/auth.middleware")
 
 route
   .post("/create", franchiseController.create)
-  .get("/get", franchiseController.get)
+  .post("/get", franchiseController.get)
     
 
 module.exports = route;
