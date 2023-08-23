@@ -12,6 +12,7 @@ app.use("/api/image-topic", require("./imageTopic.router"))
 app.use("/api/upload",auth, checkUpload, require("./upload.router"))
 app.use("/api/consultation", require("./consultation.router"))
 app.use("/api/recruitment", require("./recruitment.router"))
+app.use("/api/franchise", require("./franchise.router"))
 
 
 module.exports = app
