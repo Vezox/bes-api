@@ -32,7 +32,7 @@ class FranchiseController {
     }
   }
 
-  async check(req, res) {
+  static async check(req, res) {
     await franchiseModel.updateOne({ _id: req.body.id }, { checked: true });
     return res.send({ success: true });
   }
