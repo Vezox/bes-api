@@ -8,6 +8,7 @@ const franchiseSchema = new Schema({
   province: { type: String },
   description: { type: String },
   created_time: { type: Number, default: Date.now },
+  checked: { type: Boolean, default: false },
 });
 
 const franchises = mongoose.model("franchises", franchiseSchema);

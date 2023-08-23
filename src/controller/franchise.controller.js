@@ -31,6 +31,11 @@ class FranchiseController {
       return res.status(500).send({ success: false, message: error.message });
     }
   }
+
+  async check(req, res) {
+    await franchiseModel.updateOne({ _id: req.body.id }, { checked: true });
+    return res.send({ success: true });
+  }
 }
 
 module.exports = FranchiseController;
